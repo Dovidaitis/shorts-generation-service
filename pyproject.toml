@@ -11,6 +11,9 @@ pytest = "^8.0.0"
 pre-commit = "^3.6.1"
 fastapi = "^0.109.2"
 uvicorn = "^0.27.1"
+openai = "^1.12.0"
+requests = "^2.31.0"
+python-multipart = "^0.0.9"
 
 
 [build-system]
