@@ -14,6 +14,8 @@ uvicorn = "^0.27.1"
 openai = "^1.12.0"
 requests = "^2.31.0"
 python-multipart = "^0.0.9"
+moviepy = "^1.0.3"
+ruff = "^0.4.4"
 
 
 [build-system]
