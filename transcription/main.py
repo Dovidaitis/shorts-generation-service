@@ -3,16 +3,9 @@ from datetime import datetime
 import uuid
 from pydantic import BaseModel
 from typing import List
+from llm.main import Client
+from transcription.models import Subtitles, SubtitleSegment
 
-
-class SubtitleSegment(BaseModel):
-    word: str
-    start: float
-    end: float
-
-
-class Subtitles(BaseModel):
-    subtitles: List[SubtitleSegment]
 
 
 class Utils:
@@ -132,11 +125,14 @@ class TTS:
 
 def main():
     t = Transcription()
+    llm = Client()
     subtitles = t.get_subtitles(full_audio_file_path="assets/simulation.mp3")
     subtitles = t.add_dots(subtitles)
     t.print_subtitles(subtitles)
     merged_subtitles = t.merge_subtitles(subtitles)
     t.print_subtitles(merged_subtitles)
+    subtitles_w_emojis = llm.get_emojis(subtitles)
+    print(subtitles_w_emojis)
 
 
 if __name__ == "__main__":

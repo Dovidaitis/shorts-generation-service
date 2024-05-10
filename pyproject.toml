@@ -16,6 +16,8 @@ requests = "^2.31.0"
 python-multipart = "^0.0.9"
 moviepy = "^1.0.3"
 ruff = "^0.4.4"
+instructor = "^1.2.6"
+backoff = "^2.2.1"
 
 
 [build-system]
