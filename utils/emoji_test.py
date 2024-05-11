@@ -3,15 +3,19 @@ from PIL import Image, ImageFont
 import numpy as np
 from pilmoji import Pilmoji
 
+
 def make_emoji_image(emoji, font_path, font_size):
     """Create an image from an emoji using a specific font."""
     # emoji = emoji[0]
     print(f"trying with {emoji}")
     emoji_font = ImageFont.truetype(font_path, font_size)
-    image = Image.new("RGBA", (500, 500), (0, 0, 0, 0))  # White background for better visibility
+    image = Image.new(
+        "RGBA", (500, 500), (0, 0, 0, 0)
+    )  # White background for better visibility
     with Pilmoji(image) as pilmoji:
         pilmoji.text((0, 0), emoji.strip(), (0, 0, 0), emoji_font)
     return image
+
 
 def main():
     output_folder = "emoji_output"
@@ -30,6 +34,7 @@ def main():
         emoji_image.save(output_path)
 
     print("Emoji images created successfully.")
+
 
 if __name__ == "__main__":
     print("Running emoji.py")

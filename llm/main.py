@@ -74,4 +74,12 @@ class Client:
 if __name__ == "__main__":
     client = Client()
     client.get_emoji(SubtitleSegment(word="Hello", start=0, end=1))
-    client.get_emojis(Subtitles(subtitles=[SubtitleSegment(word="Hello", start=0, end=1), SubtitleSegment(word="World", start=1, end=2), SubtitleSegment(word="!", start=2, end=3)]))
+    client.get_emojis(
+        Subtitles(
+            subtitles=[
+                SubtitleSegment(word="Hello", start=0, end=1),
+                SubtitleSegment(word="World", start=1, end=2),
+                SubtitleSegment(word="!", start=2, end=3),
+            ]
+        )
+    )

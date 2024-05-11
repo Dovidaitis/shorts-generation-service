@@ -9,7 +9,6 @@ from utils.utils import Path, Loader
 import os
 
 
-
 class Utils:
     @staticmethod
     def get_time() -> str:
@@ -41,7 +40,12 @@ class Transcription:
         )
         return transcript
 
-    def get_subtitles(self, full_audio_file_path: str, save_path: str = "subtitles.json", add_emoji: bool = True) -> Subtitles:
+    def get_subtitles(
+        self,
+        full_audio_file_path: str,
+        save_path: str = "subtitles.json",
+        add_emoji: bool = True,
+    ) -> Subtitles:
         if os.path.exists(save_path):
             print("TRANSCRIPTION >> Loading subtitles from cache")
             subtitles = self.loader.load_from_json(Subtitles, save_path)
@@ -50,10 +54,10 @@ class Transcription:
         transcript = self.transcribe_audio(full_audio_file_path)
         subtitles = Subtitles(subtitles=transcript.words)
         subtitles = self.add_dots(subtitles)
-        subtitles = self.merge_subtitles(subtitles) 
+        subtitles = self.merge_subtitles(subtitles)
         if add_emoji:
             subtitles = self.llm.get_emojis(subtitles)
-        self.loader.save_to_json(subtitles, self.path.get_cache_path(save_path))
+        self.loader.save_to_json(subtitles, save_path)
         return subtitles
 
     def print_subtitles(self, subtitles: Subtitles, format_text=False) -> None:
@@ -64,8 +68,13 @@ class Transcription:
                 text += f"{subtitle_segment.word} "
 
         # Calculate the maximum word length to align the columns
-        max_word_length = max(len(subtitle_segment.word) for subtitle_segment in subtitles.subtitles)
-        max_emoji_length = max(len(" ".join(subtitle_segment.emoji)) for subtitle_segment in subtitles.subtitles)
+        max_word_length = max(
+            len(subtitle_segment.word) for subtitle_segment in subtitles.subtitles
+        )
+        max_emoji_length = max(
+            len(" ".join(subtitle_segment.emoji))
+            for subtitle_segment in subtitles.subtitles
+        )
 
         for subtitle_segment in subtitles.subtitles:
             word = subtitle_segment.word
@@ -75,7 +84,7 @@ class Transcription:
 
             # print(f"len of emoji: {len(emoji)} max_emoji_length: {max_emoji_length} emoji: {emoji}")
             if len(emoji) < max_emoji_length:
-                emoji += " "* ((max_emoji_length - len(emoji)))
+                emoji += " " * (max_emoji_length - len(emoji))
                 # print(f"len of emoji: {len(emoji)} max_emoji_length: {max_emoji_length} emoji: *{emoji}*")
             line = f"{word:<{max_word_length}} | {start:07.6f} to {end:07.6f} | {emoji}"
             print(line)
@@ -153,7 +162,9 @@ class TTS:
 
 def main():
     t = Transcription()
-    subtitles = t.get_subtitles(full_audio_file_path="assets/simulation.mp3", save_path="simulation.json")
+    subtitles = t.get_subtitles(
+        full_audio_file_path="assets/simulation.mp3", save_path="simulation.json"
+    )
     t.print_subtitles(subtitles)
 
 
