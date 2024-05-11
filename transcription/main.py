@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from typing import List
 from llm.main import Client
 from transcription.models import Subtitles, SubtitleSegment
+from utils.utils import Path, Loader
+import os
 
 
 
@@ -25,8 +27,11 @@ class Transcription:
     def __init__(self):
         self.client = OpenAI()
         self.llm = Client()
+        self.loader = Loader()
+        self.path = Path()
 
     def transcribe_audio(self, full_audio_file_path: str):
+        print(f"TRANSCRIPTION >> Transcribing audio from {full_audio_file_path}")
         audio_file = open(full_audio_file_path, "rb")
         transcript = self.client.audio.transcriptions.create(
             file=audio_file,
@@ -36,14 +41,19 @@ class Transcription:
         )
         return transcript
 
-    def get_subtitles(self, full_audio_file_path: str, add_emoji: bool = True) -> Subtitles:
-        print(f"Creating subtitles for {full_audio_file_path}")
+    def get_subtitles(self, full_audio_file_path: str, save_path: str = "subtitles.json", add_emoji: bool = True) -> Subtitles:
+        if os.path.exists(save_path):
+            print("TRANSCRIPTION >> Loading subtitles from cache")
+            subtitles = self.loader.load_from_json(Subtitles, save_path)
+            return subtitles
+        print(f"TRANSCRIPTION >> Creating subtitles for {full_audio_file_path}")
         transcript = self.transcribe_audio(full_audio_file_path)
         subtitles = Subtitles(subtitles=transcript.words)
         subtitles = self.add_dots(subtitles)
         subtitles = self.merge_subtitles(subtitles) 
         if add_emoji:
             subtitles = self.llm.get_emojis(subtitles)
+        self.loader.save_to_json(subtitles, self.path.get_cache_path(save_path))
         return subtitles
 
     def print_subtitles(self, subtitles: Subtitles, format_text=False) -> None:
@@ -52,9 +62,23 @@ class Transcription:
         if format_text:
             for subtitle_segment in subtitles.subtitles:
                 text += f"{subtitle_segment.word} "
-        else:
-            for subtitle_segment in subtitles.subtitles:
-                text += f"{subtitle_segment.word} {subtitle_segment.start} to {subtitle_segment.end}\n"
+
+        # Calculate the maximum word length to align the columns
+        max_word_length = max(len(subtitle_segment.word) for subtitle_segment in subtitles.subtitles)
+        max_emoji_length = max(len(" ".join(subtitle_segment.emoji)) for subtitle_segment in subtitles.subtitles)
+
+        for subtitle_segment in subtitles.subtitles:
+            word = subtitle_segment.word
+            emoji = " ".join(subtitle_segment.emoji)
+            start = subtitle_segment.start
+            end = subtitle_segment.end
+
+            # print(f"len of emoji: {len(emoji)} max_emoji_length: {max_emoji_length} emoji: {emoji}")
+            if len(emoji) < max_emoji_length:
+                emoji += " "* ((max_emoji_length - len(emoji)))
+                # print(f"len of emoji: {len(emoji)} max_emoji_length: {max_emoji_length} emoji: *{emoji}*")
+            line = f"{word:<{max_word_length}} | {start:07.6f} to {end:07.6f} | {emoji}"
+            print(line)
 
         print(text)
 
@@ -129,12 +153,8 @@ class TTS:
 
 def main():
     t = Transcription()
-    llm = Client()
-    subtitles = t.get_subtitles(full_audio_file_path="assets/output.mp3")
-    subtitles = t.add_dots(subtitles)
+    subtitles = t.get_subtitles(full_audio_file_path="assets/simulation.mp3", save_path="simulation.json")
     t.print_subtitles(subtitles)
-    merged_subtitles = t.merge_subtitles(subtitles)
-    t.print_subtitles(merged_subtitles)
 
 
 if __name__ == "__main__":

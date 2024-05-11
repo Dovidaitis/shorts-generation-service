@@ -6,14 +6,21 @@ from typing import List
 from PIL import Image, ImageFont
 import numpy as np
 from pilmoji import Pilmoji
+from utils.utils import Path
+import os
 
 emoji_font_path = "/Users/paulius/Library/Fonts/NotoColorEmoji-Regular.ttf"
-emoji_font_size = 48
+emoji_font_size = round(128 * 1.5)
 
 def random_circle_coords(radius, center=(0, 0)):
     theta = random.uniform(0, 2 * math.pi)
     x = radius * math.cos(theta) + center[0]
-    y = radius * math.sin(theta) + center[1]
+    y = center[1]
+    while abs(y - center[1]) < 120:
+        theta = random.uniform(0, 2 * math.pi)
+        y = radius * math.sin(theta) + center[1]
+        if y > center[1]:
+            y *= -1
     return [round(x), round(y)]
 
 def make_emoji_image(emoji):
@@ -53,11 +60,9 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
 
     emoji = subtitle.emoji[0] if subtitle.emoji else "🤔"
     print(f"Creating subtitle clip for '{subtitle.word}' with emoji '{emoji}'")
-    # emoji = "🤔"
     emoji_image = make_emoji_image(emoji)
-    # print(txt_clip.size)
-    position = random_circle_coords(150, center=(origin[0], origin[1]))
-    print(position)
+    position = random_circle_coords(350, center=(origin[0], origin[1]))
+    # print(position)
     emoji_clip = ImageClip(emoji_image, duration=subtitle.end - subtitle.start).set_start(subtitle.start).set_position(position)
 
     # Use list to collect clips
@@ -65,8 +70,12 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     return clips
 
 
-def save_audio(video_file_path: str, audio_file_path: str):
+def generate_audio(video_file_path: str, audio_file_path: str):
+    if os.path.exists(audio_file_path):
+        print(f"EDITOR >> Audio file already exists -> {audio_file_path}")
+        return
     VideoFileClip(video_file_path).audio.write_audiofile(audio_file_path)
+    print(f"EDITOR >> Audio file generated -> {audio_file_path}")
 
 
 def append_additional_video(main_video: CompositeVideoClip, additional_video: CompositeVideoClip) -> CompositeVideoClip:
@@ -85,30 +94,66 @@ def append_additional_video(main_video: CompositeVideoClip, additional_video: Co
     return final_video
 
 
-    # Write the final video to a file
+from moviepy.editor import VideoFileClip
+
+def resize(video_path: str, output_path: str):
+    clip = VideoFileClip(video_path)
+    
+    original_width = clip.size[0]
+    original_height = clip.size[1]
+    
+    target_aspect_ratio = 1080 / 1920
+    
+    if original_width / original_height > target_aspect_ratio:
+        # Width is too large
+        new_height = original_height
+        new_width = int(target_aspect_ratio * new_height)
+    else:
+        # Height is too large
+        new_width = original_width
+        new_height = int(new_width / target_aspect_ratio)
+    
+    # Calculate crop coordinates (center crop)
+    x_center = original_width / 2
+    y_center = original_height / 2
+    x1 = x_center - new_width / 2
+    y1 = y_center - new_height / 2
+    
+    cropped_clip = clip.crop(x1=x1, y1=y1, width=new_width, height=new_height)
+    cropped_clip.write_videofile(output_path, codec='libx264')
+    clip.close()
+    cropped_clip.close()
 
 def main():
-    main_video_path = "assets/simulation.mp4"
-    additional_video_path = "assets/parkour.mp4"
-    output_path = "output_video_with_additional_c_subtitles.mp4"
+    resize("output_video_with_additional_c_subtitles.mp4", "output.mp4")
+
+def build():
+    path = Path(
+        raw_name="simulation",
+        lower_video_name="parkour_big",
+        output_name="additional_subs",
+    )
 
     t = Transcription()
-    subtitles = t.get_subtitles(full_audio_file_path=main_video_path)
+    generate_audio(video_file_path=path.main_video_path, audio_file_path=path.subtitle_audio_path)
+    subtitles = t.get_subtitles(full_audio_file_path=path.subtitle_audio_path, save_path=path.subtitle_json_path)
     t.print_subtitles(subtitles)
 
-    main_video = VideoFileClip(main_video_path).subclip(0, 10)
-    additional_video = VideoFileClip(additional_video_path).subclip(0, 10)
-    origin = (main_video.size[0]//2, main_video.size[1]//2)
+    main_video = VideoFileClip(path.main_video_path)
+    additional_video = VideoFileClip(path.lower_video_path)
+    origin = (main_video.size[0]//2, main_video.size[1])
 
     clips = [create_subtitle_clip(sub, origin) for sub in subtitles.subtitles]
     subtitles_clips, emoji_clips = zip(*clips)
     subtitles_clips = list(subtitles_clips)
     emoji_clips = list(emoji_clips)
 
+    # CLIP = 10
+    CLIP = main_video.duration
 
     composite_vertical_video = append_additional_video(main_video, additional_video)
-    final_video = CompositeVideoClip([composite_vertical_video] + subtitles_clips + emoji_clips)
-    final_video.write_videofile(output_path, codec="libx264", fps=24)
+    final_video = CompositeVideoClip([composite_vertical_video] + subtitles_clips + emoji_clips).subclip(0, CLIP)
+    final_video.write_videofile(path.output_path, codec="libx264", fps=24)
 
 if __name__ == "__main__":
-    main()
+    build()

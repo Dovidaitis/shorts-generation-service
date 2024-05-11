@@ -60,7 +60,7 @@ class Client:
         print(f">> {subtitle_segment.word} | {resp.emoji}")
         return resp
 
-    def get_emojis(self, subtitles: Subtitles, max_n: int = 15) -> Subtitles:
+    def get_emojis(self, subtitles: Subtitles, max_n: int = 225) -> Subtitles:
         new_subtitles = Subtitles(subtitles=[])
         for idx, subtitle_segment in enumerate(subtitles.subtitles):
             if idx >= max_n:
