@@ -24,6 +24,7 @@ class Utils:
 class Transcription:
     def __init__(self):
         self.client = OpenAI()
+        self.llm = Client()
 
     def transcribe_audio(self, full_audio_file_path: str):
         audio_file = open(full_audio_file_path, "rb")
@@ -35,12 +36,14 @@ class Transcription:
         )
         return transcript
 
-    def get_subtitles(self, full_audio_file_path: str, merge: bool = True) -> Subtitles:
+    def get_subtitles(self, full_audio_file_path: str, add_emoji: bool = True) -> Subtitles:
         print(f"Creating subtitles for {full_audio_file_path}")
         transcript = self.transcribe_audio(full_audio_file_path)
         subtitles = Subtitles(subtitles=transcript.words)
         subtitles = self.add_dots(subtitles)
-        subtitles = self.merge_subtitles(subtitles) if merge else subtitles
+        subtitles = self.merge_subtitles(subtitles) 
+        if add_emoji:
+            subtitles = self.llm.get_emojis(subtitles)
         return subtitles
 
     def print_subtitles(self, subtitles: Subtitles, format_text=False) -> None:
@@ -85,6 +88,7 @@ class Transcription:
                         word=word,
                         start=subtitle.start,
                         end=subtitles.subtitles[idx + 1].end,
+                        emoji=subtitle.emoji + subtitles.subtitles[idx + 1].emoji,
                     )
                     new_subtitles.subtitles.append(new_subtitle_segment)
                     skip = True
@@ -126,13 +130,11 @@ class TTS:
 def main():
     t = Transcription()
     llm = Client()
-    subtitles = t.get_subtitles(full_audio_file_path="assets/simulation.mp3")
+    subtitles = t.get_subtitles(full_audio_file_path="assets/output.mp3")
     subtitles = t.add_dots(subtitles)
     t.print_subtitles(subtitles)
     merged_subtitles = t.merge_subtitles(subtitles)
     t.print_subtitles(merged_subtitles)
-    subtitles_w_emojis = llm.get_emojis(subtitles)
-    print(subtitles_w_emojis)
 
 
 if __name__ == "__main__":

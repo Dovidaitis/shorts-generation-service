@@ -7,27 +7,6 @@ fonts = [
     "AvantGarde-BookOblique",
     "AvantGarde-Demi",
     "AvantGarde-DemiOblique",
-    "Bookman-Demi",
-    "Bookman-DemiItalic",
-    "Bookman-Light",
-    "Bookman-LightItalic",
-    "Courier-BoldOblique",
-    "fixed",
-    "Helvetica-BoldOblique",
-    "Helvetica-Narrow",
-    "Helvetica-Narrow-Bold",
-    "Helvetica-Narrow-BoldOblique",
-    "Helvetica-Narrow-Oblique",
-    "NewCenturySchlbk-Bold",
-    "NewCenturySchlbk-BoldItalic",
-    "NewCenturySchlbk-Italic",
-    "NewCenturySchlbk-Roman",
-    "Palatino-BoldItalic",
-    "Palatino-Roman",
-    "Times-BoldItalic",
-    "Arial",
-    "Georgia",
-    # Add more fonts as needed
 ]
 
 fonts = TextClip.list("font")  # Get a list of available fonts
