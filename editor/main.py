@@ -38,6 +38,9 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     padding_x = 20  # Horizontal padding
     padding_y = 10  # Vertical padding
 
+    if subtitle.start > 10:
+        return [None, None]
+
     txt_clip = TextClip(
         subtitle.word.upper(),
         fontsize=FONT_SIZE,
@@ -62,6 +65,9 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     print(f"Creating subtitle clip for '{subtitle.word}' with emoji '{emoji}'")
     emoji_image = make_emoji_image(emoji)
     position = random_circle_coords(350, center=(origin[0], origin[1]))
+    x = (origin[0] + txt_width//2) * 0.80
+    y = (origin[1] + txt_height//2) * 1.2
+    position = (x, y)
     # print(position)
     emoji_clip = ImageClip(emoji_image, duration=subtitle.end - subtitle.start).set_start(subtitle.start).set_position(position)
 
@@ -148,12 +154,15 @@ def build():
     subtitles_clips = list(subtitles_clips)
     emoji_clips = list(emoji_clips)
 
-    # CLIP = 10
+    subtitles_clips = [clip for clip in subtitles_clips if clip is not None]
+    emoji_clips = [clip for clip in emoji_clips if clip is not None]
+
     CLIP = main_video.duration
+    CLIP = 10
 
     composite_vertical_video = append_additional_video(main_video, additional_video)
     final_video = CompositeVideoClip([composite_vertical_video] + subtitles_clips + emoji_clips).subclip(0, CLIP)
-    final_video.write_videofile(path.output_path, codec="libx264", fps=24)
+    final_video.write_videofile(path.output_path, codec="libx264", audio_codec="libmp3lame", fps=24)
 
 if __name__ == "__main__":
     build()
