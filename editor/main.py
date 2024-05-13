@@ -5,6 +5,7 @@ from moviepy.editor import (
     concatenate_videoclips,
     clips_array,
     ImageClip,
+    vfx
 )
 from transcription.main import Transcription, SubtitleSegment
 import random
@@ -21,7 +22,7 @@ import time
 emoji_font_path = "/Users/paulius/Library/Fonts/NotoColorEmoji-Regular.ttf"
 emoji_font_size = 180 
 
-SHORT_VIDEO = True 
+SHORT_VIDEO = False 
 
 
 def random_circle_coords(radius, center=(0, 0)):
@@ -80,6 +81,7 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
         .set_start(subtitle.start)
     )
 
+
     emoji = subtitle.emoji[0] if subtitle.emoji else "🤔"
     print(f"Creating subtitle clip for '{subtitle.word}' with emoji '{emoji}'")
     emoji_image = make_emoji_image(emoji)
@@ -92,6 +94,11 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
         .set_start(subtitle.start)
         .set_position(position)
     )
+
+    ANIMATION_DURATION = 0.25
+    GROW_FACTOR = 1.15
+    new_size_animation = lambda t: 1 + (GROW_FACTOR - 1) * max(0, min(1, 1 - abs(t - ANIMATION_DURATION / 2) / (ANIMATION_DURATION / 2)))
+    txt_clip = txt_clip.fx(vfx.resize, newsize=new_size_animation)
 
     # Use list to collect clips
     clips = [txt_clip, emoji_clip]
@@ -201,9 +208,9 @@ def main():
 
 def build(resize_video: bool):
     path = Path(
-        raw_name="joe",
+        raw_name="simulation",
         lower_video_name="parkour_big",
-        output_name="joe_additional_subs",
+        output_name="animation",
     )
 
     t = Transcription()
@@ -241,5 +248,5 @@ def build(resize_video: bool):
 
 
 if __name__ == "__main__":
-    build(resize_video=True)
+    build(resize_video=False)
     # recut("output/0511_165916_joe_additional_subs_resized.mp4", 30)
