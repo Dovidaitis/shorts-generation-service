@@ -19,6 +19,7 @@ ruff = "^0.4.4"
 instructor = "^1.2.6"
 backoff = "^2.2.1"
 pilmoji = "^2.0.4"
+pytube = "^15.0.0"
 
 
 [build-system]

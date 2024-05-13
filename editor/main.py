@@ -15,11 +15,13 @@ import numpy as np
 from pilmoji import Pilmoji
 from utils.utils import Path
 import os
+import sys
+import time
 
 emoji_font_path = "/Users/paulius/Library/Fonts/NotoColorEmoji-Regular.ttf"
-emoji_font_size = round(128 * 1.55)
+emoji_font_size = 180 
 
-SHORT_VIDEO = False
+SHORT_VIDEO = True 
 
 
 def random_circle_coords(radius, center=(0, 0)):
@@ -37,7 +39,8 @@ def random_circle_coords(radius, center=(0, 0)):
 def make_emoji_image(emoji):
     """Create an image from an emoji using a specific font."""
     emoji_font = ImageFont.truetype(emoji_font_path, emoji_font_size)
-    image = Image.new("RGBA", (200, 200), (0, 0, 0, 0))  # Transparent background
+    size = (emoji_font_size, emoji_font_size)
+    image = Image.new("RGBA", size, (0, 0, 0, 0))  # Transparent background
     with Pilmoji(image) as pilmoji:
         pilmoji.text((0, 0), emoji.strip(), fill=(0, 0, 0), font=emoji_font)
     return np.array(image.convert("RGBA"))
@@ -80,9 +83,8 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     emoji = subtitle.emoji[0] if subtitle.emoji else "🤔"
     print(f"Creating subtitle clip for '{subtitle.word}' with emoji '{emoji}'")
     emoji_image = make_emoji_image(emoji)
-    position = random_circle_coords(350, center=(origin[0], origin[1]))
-    x = origin[0] + 140
-    y = origin[1] + 150
+    x = origin[0] - emoji_font_size // 2 
+    y = origin[1] + 120
     position = (x, y)
     # print(position)
     emoji_clip = (
@@ -124,7 +126,6 @@ def append_additional_video(
     return final_video
 
 
-from moviepy.editor import VideoFileClip
 
 
 def resize(video_path: str):
@@ -159,7 +160,40 @@ def resize(video_path: str):
     cropped_clip.write_videofile(output_path, codec="libx264")
     clip.close()
     cropped_clip.close()
+    
+def recut(video_path: str, segment_duration: int):
+    # Ensure the maximum segment duration is no more than 60 seconds
+    segment_duration = min(segment_duration, 60)
+    clip = VideoFileClip(video_path)
 
+    ranges = []
+    clip_duration = clip.duration
+    max_duration = int(clip_duration)
+    last = False
+    prev = 0
+    for num in range(0, max_duration, segment_duration):
+        if max_duration - num < segment_duration:
+            ranges.append((prev, clip_duration))
+            last = True
+        else:
+            ranges.append((prev, num))
+        prev = num
+    if not last:
+        ranges.append((prev, clip_duration))
+    ranges.pop(0)
+    
+    print(ranges)
+
+    for idx, clip_range in enumerate(ranges):
+        try:
+            print(f"Processing segment {idx+1} of {len(ranges)}...")
+            subclip = clip.subclip(*clip_range)
+            subclip_path = f"{video_path.split('.')[0]}_recut_pt_{idx+1}.mp4"
+            subclip.write_videofile(subclip_path, audio_codec="aac", fps=30)
+            time.sleep(1)
+        except Exception as e:
+            print(f"Error processing segment {idx+1}: {e}", file=sys.stderr)
+            continue
 
 def main():
     resize("output_video_with_additional_c_subtitles.mp4", "output.mp4")
@@ -208,3 +242,4 @@ def build(resize_video: bool):
 
 if __name__ == "__main__":
     build(resize_video=True)
+    # recut("output/0511_165916_joe_additional_subs_resized.mp4", 30)

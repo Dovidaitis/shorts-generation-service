@@ -4,9 +4,11 @@ import json
 from pydantic import BaseModel
 
 
-PREFIX_OUTPUT_PATH = "output/"
-PREFFIX_ASSETS_PATH = "assets/"
-PREFIX_CACHE_PATH = "assets/cache/"
+OUTPUT_PATH = "assets/output/"
+ASSETS_PATH = "assets/"
+DOWNLOADS_PATH = "assets/downloads/"
+STORAGE_PATH = "assets/storage/"
+CACHE_PATH = "assets/cache/"
 FULL_EMOJI_FONT_PATH = "/Users/paulius/Library/Fonts/NotoColorEmoji-Regular.ttf"
 
 
@@ -37,19 +39,24 @@ class Path:
 
     @staticmethod
     def get_assets_path(file_name):
-        os.makedirs(PREFFIX_ASSETS_PATH, exist_ok=True)
-        return os.path.join(PREFFIX_ASSETS_PATH, file_name)
+        os.makedirs(ASSETS_PATH, exist_ok=True)
+        return os.path.join(ASSETS_PATH, file_name)
 
     def get_output_path(self, file_name):
-        os.makedirs(PREFIX_OUTPUT_PATH, exist_ok=True)
+        os.makedirs(OUTPUT_PATH, exist_ok=True)
         return os.path.join(
-            PREFIX_OUTPUT_PATH, f"{self.get_timestamp()}_{file_name}.mp4"
+            OUTPUT_PATH, f"{self.get_timestamp()}_{file_name}.mp4"
         )
 
     @staticmethod
     def get_cache_path(file_name):
-        os.makedirs(PREFIX_CACHE_PATH, exist_ok=True)
-        return os.path.join(PREFIX_CACHE_PATH, file_name)
+        os.makedirs(CACHE_PATH, exist_ok=True)
+        return os.path.join(CACHE_PATH, file_name)
+
+    @staticmethod
+    def get_downloads_path(file_name):
+        os.makedirs(DOWNLOADS_PATH, exist_ok=True)
+        return os.path.join(DOWNLOADS_PATH, file_name)
 
 
 class Loader:

@@ -165,3 +165,4 @@ samples
 assets
 *.mp4
 *.mp4
+.DS*
