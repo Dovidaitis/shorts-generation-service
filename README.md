@@ -1,9 +1,10 @@
 # TODO
 
-- fix sizing
+- fix sizing / scale / aspect ration
 - subtitle tweaks
-- optimize llm calls (, randomly not call?)
 
 
 - ability to add description
 - video title
+- censorship on words
+  - bleeping

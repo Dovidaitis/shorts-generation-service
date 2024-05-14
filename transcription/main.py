@@ -55,8 +55,10 @@ class Transcription:
         subtitles = Subtitles(subtitles=transcript.words)
         subtitles = self.add_dots(subtitles)
         subtitles = self.merge_subtitles(subtitles)
+        self.print_subtitles(subtitles, format_text=True)
         if add_emoji:
             subtitles = self.llm.get_emojis(subtitles)
+        print(f"TRANSCRIPTION >> Saving subtitles to {save_path}")
         self.loader.save_to_json(subtitles, save_path)
         return subtitles
 
@@ -163,9 +165,9 @@ class TTS:
 def main():
     t = Transcription()
     subtitles = t.get_subtitles(
-        full_audio_file_path="assets/simulation.mp3", save_path="simulation.json"
+        full_audio_file_path="assets/joe.mp3", add_emoji=False
     )
-    t.print_subtitles(subtitles)
+    # t.print_subtitles(subtitles, format_text=True)
 
 
 if __name__ == "__main__":

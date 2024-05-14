@@ -19,33 +19,7 @@ import os
 import sys
 import time
 
-emoji_font_path = "/Users/paulius/Library/Fonts/NotoColorEmoji-Regular.ttf"
-emoji_font_size = 180 
-
 SHORT_VIDEO = False 
-
-
-def random_circle_coords(radius, center=(0, 0)):
-    theta = random.uniform(0, 2 * math.pi)
-    x = radius * math.cos(theta) + center[0]
-    y = center[1]
-    while abs(y - center[1]) < 120:
-        theta = random.uniform(0, 2 * math.pi)
-        y = radius * math.sin(theta) + center[1]
-        if y > center[1]:
-            y *= -1
-    return [round(x), round(y)]
-
-
-def make_emoji_image(emoji):
-    """Create an image from an emoji using a specific font."""
-    emoji_font = ImageFont.truetype(emoji_font_path, emoji_font_size)
-    size = (emoji_font_size, emoji_font_size)
-    image = Image.new("RGBA", size, (0, 0, 0, 0))  # Transparent background
-    with Pilmoji(image) as pilmoji:
-        pilmoji.text((0, 0), emoji.strip(), fill=(0, 0, 0), font=emoji_font)
-    return np.array(image.convert("RGBA"))
-
 
 black_jetbrainsMono_gold = {
     "font": "JetBrainsMono-NF-ExtraBold",
@@ -53,6 +27,37 @@ black_jetbrainsMono_gold = {
     "color": "black",
     "fontsize": 60
 }
+def convert_channels(img, n_channels):
+    """
+    Convert an image to have the specified number of channels.
+    """
+    mismatch = True 
+    if img.shape[2] == n_channels:
+        # return False
+        return img
+        
+    if n_channels == 3:
+        if img.shape[2] == 4:
+            # return mismatch 
+            return img[:, :, :3]  # Convert RGBA to RGB
+        if img.shape[2] == 2:
+            # return mismatch 
+            return img[:, :, :1]  # Convert 2-channel image to single channel
+    elif n_channels == 4:
+        if img.shape[2] == 3:
+            # return mismatch 
+            return np.concatenate([img, np.ones(img.shape[:2] + (1,), dtype=img.dtype) * 255], axis=2)  # Convert RGB to RGBA
+        if img.shape[2] == 2:
+            # return mismatch 
+            return np.concatenate([img, np.ones(img.shape[:2] + (2,), dtype=img.dtype) * 255], axis=2)  # Convert 2-channel to RGBA
+    return img
+
+def check_channel_mismatch(img, n_channels):
+    if img.shape[2] != n_channels:
+        return True
+    return False
+
+
 
 def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     padding_x = 20  # Horizontal padding
@@ -80,19 +85,17 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
         .set_start(subtitle.start)
     )
 
-
     emoji = subtitle.emoji[0][0] if subtitle.emoji else "🤔"
     character = emoji.encode('utf-16', 'surrogatepass').decode('utf-16')
     unicode_code = f"{ord(character):04X}"
-    print(f"Creating subtitle clip for '{subtitle.word}' with emoji '{emoji} {unicode_code}'")
-    emoji_image = make_emoji_image(emoji)
+
     x = origin[0] - 160 // 2 
     y = origin[1] + 120
     position = (x, y)
     emoji_path = f"assets/ios_emoji_pack/{unicode_code}.png"
+    print(f"Creating subtitle {position} clip for '{subtitle.word}' with emoji '{emoji} {unicode_code}'")
     if not os.path.exists(emoji_path):
-        print(f"Emoji not found at {emoji_path}. Using default emoji.")
-        # emoji_path = f"assets/ios_emoji_pack/1F914.png"
+        print(f"  >>Emoji not found at {emoji_path}.")
         emoji_clip = None
     else:
         emoji_clip = (
@@ -102,7 +105,7 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
         )
 
     ANIMATION_DURATION = 0.25
-    GROW_FACTOR = 1.15
+    GROW_FACTOR = 1.13
     EMOJI_DURATION = 0.3
     EMOJI_GROW_FACTOR = 1.05
     new_size_animation = lambda t: 1 + (GROW_FACTOR - 1) * max(0, min(1, 1 - abs(t - ANIMATION_DURATION / 2) / (ANIMATION_DURATION / 2)))
@@ -111,6 +114,13 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     if emoji_clip:
         emoji_clip = emoji_clip.fx(vfx.resize, lambda t: (emoji_animation(t) * emoji_clip.size[0], emoji_animation(t) * emoji_clip.size[1]))
 
+    # Ensure all clips are RGB or RGBA
+    txt_clip = txt_clip.fl_image(lambda img: convert_channels(img, 3))
+    if emoji_clip:
+        # emoji_clip = emoji_clip.fl_image(lambda img: convert_channels(img, 3))
+        first_frame = emoji_clip.get_frame(0)  
+        if check_channel_mismatch(first_frame, 3):
+            emoji_clip = None
 
     # Use list to collect clips
     clips = [txt_clip, emoji_clip]
@@ -139,6 +149,7 @@ def append_additional_video(
         additional_video = additional_video.subclip(
             random_start_time, random_start_time + main_video.duration
         )
+        additional_video = additional_video.volumex(0.3)
 
     # Stack videos vertically
     final_video = clips_array([[main_video], [additional_video]])

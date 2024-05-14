@@ -10,7 +10,7 @@ DOWNLOADS_PATH = "assets/downloads/"
 STORAGE_PATH = "assets/storage/"
 CACHE_PATH = "assets/cache/"
 FULL_EMOJI_FONT_PATH = "/Users/paulius/Library/Fonts/NotoColorEmoji-Regular.ttf"
-IOS_EMOJI_PATH = "assets/ios_emoji_pack"
+IOS_EMOJI_PATH = "assets/ios_emoji"
 
 
 class Path:
@@ -80,7 +80,8 @@ class Loader:
     @staticmethod
     def save_to_json(model: BaseModel, file_path: str) -> None:
         if not os.path.exists(file_path):
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            # os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            pass
         with open(file_path, "w") as file:
             json.dump(model.dict(), file)
 
@@ -118,5 +119,7 @@ if __name__ == "__main__":
     items = os.listdir(IOS_EMOJI_PATH)
     for item in items:
         unicode_name = f"{Path.path_to_unicode(item)}.png"
-        print(f"{unicode_name} < {item}")
+        length = len(unicode_name.split(".png")[0]) 
+        if length > 5 or length < 4:
+            print(f"{unicode_name} < {item}")
         os.rename(f"{IOS_EMOJI_PATH}/{item}", f"{IOS_EMOJI_PATH}/{unicode_name}")
