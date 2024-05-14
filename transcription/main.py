@@ -165,7 +165,7 @@ class TTS:
 def main():
     t = Transcription()
     subtitles = t.get_subtitles(
-        full_audio_file_path="assets/joe.mp3", add_emoji=False
+        full_audio_file_path="assets/joe.mp3", add_emoji=True
     )
     # t.print_subtitles(subtitles, format_text=True)
 

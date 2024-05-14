@@ -7,7 +7,8 @@ from transcription.models import Subtitles, SubtitleSegment
 
 TEMPERATURE = 0
 SEED = 0
-LLM_MODEL = "gpt-3.5-turbo"
+# LLM_MODEL = "gpt-3.5-turbo"
+LLM_MODEL = "gpt-4o-2024-05-13"
 
 
 class RateLimitException(Exception):
@@ -19,7 +20,9 @@ def on_backoff(details):
 
 
 class SelectedEmoji(BaseModel):
-    emoji: List[str] = Field(..., title="List of relevent emojis. Max 5")
+    emoji: List[str] = Field(..., title="List of relevent emojis. Max 1")
+    censored_curse_text: str | None = Field(None, title="Censored text")
+    censored_text: bool = Field(False, title="If the text was censored")
 
 
 class Client:
@@ -54,16 +57,20 @@ class Client:
                 raise e
 
     def get_emoji(self, subtitle_segment: SubtitleSegment):
-        system_task = "Your task is to give ONLY relevent emojis for the given text. You may return nothing if the provided emoji wouldn't be engaging. No more than 3"
-        content = f"Return relevent emojis for the text: {subtitle_segment.word}"
+        system_task = "Return relevent 1 emoji; censor only heavy curse words like this: F@#K, SH!T, etc. Only censor heavy words like FUCK, BITCH, WHORE, FAGGOT. Don't change punctuation"
+        content = f"Return relevent emojis and censored version for the text: {subtitle_segment.word}."
         resp = self.extract_model(system_task, content, SelectedEmoji)
-        print(f">> {subtitle_segment.word} | {resp.emoji}")
+        print(f">> {subtitle_segment.word} | {resp.emoji} | {resp.censored_curse_text} | {resp.censored_text}")
         return resp
 
     def get_emojis(self, subtitles: Subtitles) -> Subtitles:
         new_subtitles = Subtitles(subtitles=[])
         for idx, subtitle_segment in enumerate(subtitles.subtitles):
-            subtitle_segment.emoji = self.get_emoji(subtitle_segment).emoji
+            resp = self.get_emoji(subtitle_segment)
+            subtitle_segment.emoji = resp.emoji
+            if resp.censored_text:
+                subtitle_segment.word = resp.censored_curse_text
+                subtitle_segment.censored = True
             new_subtitles.subtitles.append(subtitle_segment)
 
         return new_subtitles
@@ -76,8 +83,7 @@ if __name__ == "__main__":
         Subtitles(
             subtitles=[
                 SubtitleSegment(word="Hello", start=0, end=1),
-                SubtitleSegment(word="World", start=1, end=2),
-                SubtitleSegment(word="!", start=2, end=3),
+                SubtitleSegment(word="this is shit", start=1, end=2),
             ]
         )
     )

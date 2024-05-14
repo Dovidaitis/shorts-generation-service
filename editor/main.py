@@ -5,7 +5,9 @@ from moviepy.editor import (
     concatenate_videoclips,
     clips_array,
     ImageClip,
-    vfx
+    vfx,
+    CompositeAudioClip,
+    AudioFileClip,
 )
 from transcription.main import Transcription, SubtitleSegment
 import random
@@ -57,6 +59,14 @@ def check_channel_mismatch(img, n_channels):
         return True
     return False
 
+def handle_bleep_audio(video_clip, subtitle):
+    if subtitle.censored:
+        bleep_audio = AudioFileClip("assets/sounds/bleep.mp3").subclip(0, subtitle.end - subtitle.start).volumex(0.3)
+        video_audio = video_clip.audio
+        new_audio = CompositeAudioClip([video_audio, bleep_audio.set_start(subtitle.start)])
+        video_clip = video_clip.set_audio(new_audio)
+    return video_clip
+
 
 
 def create_subtitle_clip(subtitle: SubtitleSegment, origin):
@@ -85,7 +95,10 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
         .set_start(subtitle.start)
     )
 
-    emoji = subtitle.emoji[0][0] if subtitle.emoji else "🤔"
+    try:
+        emoji = subtitle.emoji[0][0]
+    except IndexError:
+        emoji = "🤔"
     character = emoji.encode('utf-16', 'surrogatepass').decode('utf-16')
     unicode_code = f"{ord(character):04X}"
 
@@ -121,6 +134,9 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
         first_frame = emoji_clip.get_frame(0)  
         if check_channel_mismatch(first_frame, 3):
             emoji_clip = None
+
+
+    
 
     # Use list to collect clips
     clips = [txt_clip, emoji_clip]
@@ -248,6 +264,9 @@ def build(resize_video: bool):
     main_video = VideoFileClip(path.main_video_path)
     additional_video = VideoFileClip(path.lower_video_path)
     origin = (main_video.size[0] // 2, main_video.size[1])
+    x = origin[0] - 160 // 2 
+    y = origin[1] + 120
+    position = (x, y)
 
     clips = [create_subtitle_clip(sub, origin) for sub in subtitles.subtitles]
     subtitles_clips, emoji_clips = zip(*clips)

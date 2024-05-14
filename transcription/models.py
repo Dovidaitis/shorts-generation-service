@@ -7,6 +7,7 @@ class SubtitleSegment(BaseModel):
     start: float
     end: float
     emoji: List[str] = []
+    censored: bool = False
 
 
 class Subtitles(BaseModel):
