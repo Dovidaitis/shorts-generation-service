@@ -10,6 +10,7 @@ DOWNLOADS_PATH = "assets/downloads/"
 STORAGE_PATH = "assets/storage/"
 CACHE_PATH = "assets/cache/"
 FULL_EMOJI_FONT_PATH = "/Users/paulius/Library/Fonts/NotoColorEmoji-Regular.ttf"
+IOS_EMOJI_PATH = "assets/ios_emoji_pack"
 
 
 class Path:
@@ -58,6 +59,22 @@ class Path:
         os.makedirs(DOWNLOADS_PATH, exist_ok=True)
         return os.path.join(DOWNLOADS_PATH, file_name)
 
+    
+    @staticmethod
+    def get_emoji_path_from_unicode(unicode:str):
+        return f"{IOS_EMOJI_PATH}/{unicode}.png"
+
+    @staticmethod
+    def path_to_unicode(path: str):
+        file_name_w_extension = path.split("/")[-1]
+        file_name = file_name_w_extension.split(".")[0]
+        unicode_str = file_name.split("_")[1]
+        unicode_str = unicode_str.split("-")[0]
+        return unicode_str
+        # print(f"file_name_w_extension: {file_name_w_extension} file_name: {file_name} unicode_str: \t\t*{unicode_str}*")
+        
+
+
 
 class Loader:
     @staticmethod
@@ -82,7 +99,7 @@ class User(BaseModel):
     is_active: bool
 
 
-if __name__ == "__main__":
+def test_path():
     p = Path()
     print(p.get_timestamp())
     print(p.get_assets_path("test.mp4"))
@@ -96,3 +113,10 @@ if __name__ == "__main__":
     # Load the user object from the JSON file
     loaded_user = l.load_from_json(User, file_path)
     print(loaded_user)
+
+if __name__ == "__main__":
+    items = os.listdir(IOS_EMOJI_PATH)
+    for item in items:
+        unicode_name = f"{Path.path_to_unicode(item)}.png"
+        print(f"{unicode_name} < {item}")
+        os.rename(f"{IOS_EMOJI_PATH}/{item}", f"{IOS_EMOJI_PATH}/{unicode_name}")

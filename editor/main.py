@@ -47,9 +47,14 @@ def make_emoji_image(emoji):
     return np.array(image.convert("RGBA"))
 
 
-def create_subtitle_clip(subtitle: SubtitleSegment, origin):
-    FONT_SIZE = 60
+black_jetbrainsMono_gold = {
+    "font": "JetBrainsMono-NF-ExtraBold",
+    "bg_color": "gold",
+    "color": "black",
+    "fontsize": 60
+}
 
+def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     padding_x = 20  # Horizontal padding
     padding_y = 10  # Vertical padding
 
@@ -58,10 +63,7 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
 
     txt_clip = TextClip(
         subtitle.word.upper(),
-        fontsize=FONT_SIZE,
-        color="black",
-        font="JetBrainsMono-NF-ExtraBold",
-        bg_color="gold",
+        **black_jetbrainsMono_gold,
     )
 
     txt_width = txt_clip.size[0] + 2 * padding_x
@@ -70,10 +72,7 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     txt_clip = (
         TextClip(
             subtitle.word.upper(),
-            fontsize=FONT_SIZE,
-            color="black",
-            font="JetBrainsMono-NF-ExtraBold",
-            bg_color="gold",
+            **black_jetbrainsMono_gold,
             size=(txt_width, txt_height),
         )
         .set_position("center")
@@ -82,23 +81,36 @@ def create_subtitle_clip(subtitle: SubtitleSegment, origin):
     )
 
 
-    emoji = subtitle.emoji[0] if subtitle.emoji else "🤔"
-    print(f"Creating subtitle clip for '{subtitle.word}' with emoji '{emoji}'")
+    emoji = subtitle.emoji[0][0] if subtitle.emoji else "🤔"
+    character = emoji.encode('utf-16', 'surrogatepass').decode('utf-16')
+    unicode_code = f"{ord(character):04X}"
+    print(f"Creating subtitle clip for '{subtitle.word}' with emoji '{emoji} {unicode_code}'")
     emoji_image = make_emoji_image(emoji)
-    x = origin[0] - emoji_font_size // 2 
+    x = origin[0] - 160 // 2 
     y = origin[1] + 120
     position = (x, y)
-    # print(position)
-    emoji_clip = (
-        ImageClip(emoji_image, duration=subtitle.end - subtitle.start)
-        .set_start(subtitle.start)
-        .set_position(position)
-    )
+    emoji_path = f"assets/ios_emoji_pack/{unicode_code}.png"
+    if not os.path.exists(emoji_path):
+        print(f"Emoji not found at {emoji_path}. Using default emoji.")
+        # emoji_path = f"assets/ios_emoji_pack/1F914.png"
+        emoji_clip = None
+    else:
+        emoji_clip = (
+            ImageClip(emoji_path, duration=subtitle.end - subtitle.start)
+            .set_start(subtitle.start)
+            .set_position(position)
+        )
 
     ANIMATION_DURATION = 0.25
     GROW_FACTOR = 1.15
+    EMOJI_DURATION = 0.3
+    EMOJI_GROW_FACTOR = 1.05
     new_size_animation = lambda t: 1 + (GROW_FACTOR - 1) * max(0, min(1, 1 - abs(t - ANIMATION_DURATION / 2) / (ANIMATION_DURATION / 2)))
+    emoji_animation = lambda t: 1 + (EMOJI_GROW_FACTOR - 1) * max(0, min(1, 1 - abs(t - EMOJI_DURATION / 2) / (EMOJI_DURATION / 2)))
     txt_clip = txt_clip.fx(vfx.resize, newsize=new_size_animation)
+    if emoji_clip:
+        emoji_clip = emoji_clip.fx(vfx.resize, lambda t: (emoji_animation(t) * emoji_clip.size[0], emoji_animation(t) * emoji_clip.size[1]))
+
 
     # Use list to collect clips
     clips = [txt_clip, emoji_clip]
@@ -164,7 +176,7 @@ def resize(video_path: str):
     y1 = y_center - new_height / 2
 
     cropped_clip = clip.crop(x1=x1, y1=y1, width=new_width, height=new_height)
-    cropped_clip.write_videofile(output_path, codec="libx264")
+    cropped_clip.write_videofile(output_path, audio_codec="aac", fps=30)
     clip.close()
     cropped_clip.close()
     
@@ -208,7 +220,7 @@ def main():
 
 def build(resize_video: bool):
     path = Path(
-        raw_name="simulation",
+        raw_name="joe",
         lower_video_name="parkour_big",
         output_name="animation",
     )
@@ -248,5 +260,5 @@ def build(resize_video: bool):
 
 
 if __name__ == "__main__":
-    build(resize_video=False)
+    build(resize_video=True)
     # recut("output/0511_165916_joe_additional_subs_resized.mp4", 30)
