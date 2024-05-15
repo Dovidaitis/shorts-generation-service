@@ -11,7 +11,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 
 - Install packages with `poetry install`
 - Enable venv with `poetry shell`
-- Run 
+- Run `poetry run python setup.py` 
 
 ## Usage
 
