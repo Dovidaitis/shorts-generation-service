@@ -245,12 +245,7 @@ def main():
     resize("output_video_with_additional_c_subtitles.mp4", "output.mp4")
 
 
-def build(resize_video: bool):
-    path = Path(
-        raw_name="joe",
-        lower_video_name="parkour_big",
-        output_name="animation",
-    )
+def build(resize_video: bool, path: Path):
 
     t = Transcription()
     generate_audio(
@@ -284,11 +279,16 @@ def build(resize_video: bool):
     final_video = CompositeVideoClip(
         [composite_vertical_video] + subtitles_clips + emoji_clips
     ).subclip(0, CLIP)
-    final_video.write_videofile(path.output_path, audio_codec="aac", fps=30)
+    final_video.write_videofile(path.output_path, audio_codec="aac", fps=30, threads=os.cpu_count())
     if resize_video:
         resize(path.output_path)
 
 
 if __name__ == "__main__":
-    build(resize_video=True)
-    # recut("output/0511_165916_joe_additional_subs_resized.mp4", 30)
+    path = Path(
+        raw_name="Joe_Rogan_Is_Steven_Seagal_Legit_",
+        lower_video_name="parkour_big",
+        output_name="joe_seagal",
+    )
+    build(resize_video=True, path=path)
+    # recut("assets/output/0514_235942_joe_seagal_resized.mp4", 35)

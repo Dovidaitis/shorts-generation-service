@@ -171,4 +171,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    t = Transcription()
+    transcrpit = t.transcribe_audio("assets/simulation.mp3").words
+    print(transcrpit)
+    TTS().save_transcript(str(transcrpit), "simulation.json")

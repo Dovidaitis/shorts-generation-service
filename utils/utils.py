@@ -19,7 +19,7 @@ class Path:
         self.main_video_name = f"{raw_name}.mp4"
         self.lower_video_name = f"{lower_video_name}.mp4"
         self.output_name = f"{output_name}.mp4"
-        self.main_video_path = self.get_assets_path(self.main_video_name)
+        self.main_video_path = f"assets/downloads/{self.main_video_name}"
         self.lower_video_path = self.get_assets_path(self.lower_video_name)
         self.output_path = f"{self.get_output_path(output_name)}"
         self.subtitle_audio_name = f"{raw_name}.mp3"
