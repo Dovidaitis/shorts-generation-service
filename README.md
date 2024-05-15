@@ -16,7 +16,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 ## Usage
 
 ### Download youtube video with `yt/main` package
-- will be save at `assets/downloads`
+- will be saved at `assets/downloads`
 ```python
     vm = VideoManger()
     print(vm.download_video("https://www.youtube.com/watch?v=KDiEIqD4MJ8"))
