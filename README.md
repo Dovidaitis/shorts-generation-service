@@ -1,6 +1,6 @@
 # 🎥 Convert YouTube videos (links) into multiple shorts with subtitles and emojis 🎉
 
-[example.gif](readme_assets/example.gif)
+![example.gif](readme_assets/example.gif)
 
 ## Setup
 
